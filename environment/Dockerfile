@@ -1,4 +1,4 @@
-# hash:sha256:2c77f860b3dce5a26d4f61d6f67c1bb1f9255cdda5b2b4256589b939e7ba33d8
+# hash:sha256:70892b9208a5a49afee34297ffa8abce8c31bfa76f871e28c32960effb840e71
 ARG REGISTRY_HOST
 FROM $REGISTRY_HOST/codeocean/pytorch:2.1.0-cuda11.8-mambaforge23.1.0-4-python3.10.12-ubuntu22.04
 
@@ -14,7 +14,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 RUN pip3 install -U --no-cache-dir \
-    roicat[all]==1.2.0
+    roicat[all]==1.2.2
 
 COPY postInstall /
 RUN /postInstall
