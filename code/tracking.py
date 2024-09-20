@@ -8,13 +8,13 @@ import numpy as np
 
 import roicat
 
-from suite2p_paths import load_plane_paths
+from path_io import load_planes
 
-def align_plane(plane, um_per_pixel, out_dir, out_name):
+def align_plane(plane, out_dir, out_name):
     data = roicat.data_importing.Data_suite2p(
         paths_statFiles=[ p['stat_path'] for p in plane ],
         paths_opsFiles=[ p['ops_path'] for p in plane ],
-        um_per_pixel=0.78,  ## IMPORTANT PARAMETER. Use a list of floats if values differ in each session.
+        um_per_pixel=[ p['fov_scale_factor'] for p in plane ],  ## IMPORTANT PARAMETER. Use a list of floats if values differ in each session.
         new_or_old_suite2p='new',
         type_meanImg='meanImg',
     #     FOV_images=FOVs_mixed,
@@ -290,10 +290,8 @@ def align_plane(plane, um_per_pixel, out_dir, out_name):
     )
 
 if __name__ == "__main__":    
-    # need to load from session.json
-    um_per_pixel = 0.78 
-    
-    plane_paths = load_plane_paths('/data/')
-    for name, plane in plane_paths.items():
+    planes = load_planes('/data/')
+
+    for name, plane in planes.items():
         print(f"running plane: {name}")
-        align_plane(plane, um_per_pixel, '/results', str(name))
+        align_plane(plane, '/results', str(name))
