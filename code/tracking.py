@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import roicat
+import argparse
 
 from path_io import load_planes
 
@@ -290,7 +291,11 @@ def align_plane(plane, out_dir, out_name):
     )
 
 if __name__ == "__main__":    
-    planes = load_planes('/data/')
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--default-fov-scale-factor", default=None, type=float)
+    args = parser.parse_args()
+
+    planes = load_planes('/data/', default_fov_scale_factor=args.default_fov_scale_factor)
 
     for name, plane in planes.items():
         print(f"running plane: {name}")

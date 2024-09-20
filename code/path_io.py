@@ -1,7 +1,7 @@
 import os, json
 from pathlib import Path
 
-def load_session(session_dir):
+def load_session(session_dir, default_fov_scale_factor=None):
     planes={}
     
     for plane_idx, plane_name in enumerate(sorted(os.listdir(session_dir))):
@@ -21,6 +21,7 @@ def load_session(session_dir):
                 )
         
     session_file = session_dir / "session.json"
+ 
     if session_file.exists():
         with open(session_file, 'r') as f:
             session = json.load(f)
@@ -30,11 +31,18 @@ def load_session(session_dir):
             
             for i,ophys_fov in enumerate(ophys_fovs):
                 plane_index = i # ophys_fov['index'] - TODO, bug! `index` was set wrong for awhile
-                planes[plane_index]['fov_scale_factor'] = float(ophys_fov['fov_scale_factor'])
+                fov_scale_factor = ophys_fov.get('fov_scale_factor', None)
+                if fov_scale_factor is not None:
+                    planes[plane_index]['fov_scale_factor'] = float(fov_scale_factor)
+
+    if default_fov_scale_factor is not None:
+        for plane_index, plane in planes.items():
+            if not 'fov_scale_factor' in plane:
+                plane['fov_scale_factor'] = default_fov_scale_factor
                     
     return planes
 
-def load_planes(data_dir):
+def load_planes(data_dir, default_fov_scale_factor=None):
     sessions = []
     for session_path in os.listdir(data_dir):
         session = load_session(Path(data_dir) / Path(session_path))
