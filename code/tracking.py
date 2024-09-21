@@ -2,7 +2,7 @@ from pathlib import Path
 import copy
 import multiprocessing as mp
 import tempfile
-
+import logging
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -291,6 +291,7 @@ def align_plane(plane, out_dir, out_name):
     )
 
 if __name__ == "__main__":    
+    logging.basicConfig(level=logging.INFO)
     parser = argparse.ArgumentParser()
     parser.add_argument("--default-fov-scale-factor", default=None, type=float)
     args = parser.parse_args()

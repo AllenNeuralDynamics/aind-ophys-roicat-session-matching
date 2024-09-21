@@ -1,5 +1,6 @@
 import os, json
 from pathlib import Path
+import logging
 
 def load_session(session_dir, default_fov_scale_factor=None):
     planes={}
@@ -7,18 +8,22 @@ def load_session(session_dir, default_fov_scale_factor=None):
     for plane_idx, plane_name in enumerate(sorted(os.listdir(session_dir))):
         plane_dir = session_dir / plane_name
         if plane_dir.is_dir() and plane_dir.parts[-1] != 'nextflow': 
+            logging.info(f"checking {plane_dir}")
             
             projection_image_path = f"{plane_dir}/motion_correction/{plane_name}_maximum_projection.png"
             stat_path=f"{plane_dir}/segmentation/suite2p/plane0/stat.npy"
             ops_path=f"{plane_dir}/segmentation/suite2p/plane0/ops.npy"
-            
-            if os.path.exists(projection_image_path) and os.path.exists(stat_path) and os.path.exists(ops_path):
+                                    
+            #if os.path.exists(projection_image_path) and os.path.exists(stat_path) and os.path.exists(ops_path):
+            if os.path.exists(stat_path) and os.path.exists(ops_path):
                 planes[plane_idx] = dict(
                     plane_name=plane_name,
                     projection_image_path=projection_image_path,
                     stat_path=stat_path,
                     ops_path=ops_path,
                 )
+            else:
+                logging.warning(f"missing stat/ops paths for {plane_dir}")
         
     session_file = session_dir / "session.json"
  
@@ -43,9 +48,12 @@ def load_session(session_dir, default_fov_scale_factor=None):
     return planes
 
 def load_planes(data_dir, default_fov_scale_factor=None):
+    if default_fov_scale_factor:
+        logging.info(f"running with default fov scale factor: {default_fov_scale_factor}")
+        
     sessions = []
     for session_path in os.listdir(data_dir):
-        session = load_session(Path(data_dir) / Path(session_path))
+        session = load_session(Path(data_dir) / Path(session_path), default_fov_scale_factor=default_fov_scale_factor)
         sessions.append(session)
 
     planes = {}
