@@ -1,0 +1,16 @@
+{
+	"version": 1,
+	"named_parameters": true,
+	"general": {
+		"title": "2p Cross Session Matching with ROICaT"
+	},
+	"parameters": [
+		{
+			"id": "mSJrmYdm1IISlmAH",
+			"name": "default-fov-scale-factor",
+			"param_name": "default-fov-scale-factor",
+			"type": "text",
+			"value_type": "number"
+		}
+	]
+}
