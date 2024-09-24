@@ -7,10 +7,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import roicat
-import argparse
 import pandas as pd
 
-from path_io import load_planes
 import uuid
 
 def build_roi_table(plane, results, quality_metrics):
@@ -319,15 +317,5 @@ def align_plane(plane, out_dir, out_name):
     csv_path = str(dir_save / ('ROICaT.tracking.results' + '.csv'))
     roi_table = build_roi_table(plane, results, quality_metrics)
     roi_table.to_csv(csv_path)
-
-if __name__ == "__main__":    
-    logging.basicConfig(level=logging.INFO)
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--default-fov-scale-factor", default=None, type=float)
-    args = parser.parse_args()
-
-    planes = load_planes('/data/', default_fov_scale_factor=args.default_fov_scale_factor)
-
-    for name, plane in planes.items():
-        print(f"running plane: {name}")
-        align_plane(plane, '/results', str(name))
+    
+    return results

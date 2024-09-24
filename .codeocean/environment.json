@@ -19,6 +19,14 @@
 		"pip3": {
 			"packages": [
 				{
+					"name": "aind-data-schema",
+					"version": "1.0.0"
+				},
+				{
+					"name": "aind-metadata-upgrader",
+					"version": "0.0.17"
+				},
+				{
 					"name": "roicat[all]",
 					"version": "1.2.2"
 				}
