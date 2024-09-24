@@ -8,8 +8,35 @@ import numpy as np
 
 import roicat
 import argparse
+import pandas as pd
 
 from path_io import load_planes
+import uuid
+
+def build_roi_table(plane, results, quality_metrics):
+    all_rois = []
+    
+    ucids = set(results['clusters']['labels_dict'].keys())
+    uuid_lookup = { ucid: uuid.uuid4() for ucid in ucids if ucid >= 0 }    
+    roi_global_index=0
+    for session_index, session_roi_ids in enumerate(results['clusters']['labels_bySession']):
+        for roi_session_index, ucid in enumerate(session_roi_ids):
+            matched = ucid >= 0
+            all_rois.append(dict(
+                fov_name=plane[session_index]['plane_name'],
+                session_name=plane[session_index]['session_name'],
+                roi_session_index=int(roi_session_index), 
+                ucid=int(ucid),
+                roi_id=str(uuid_lookup.get(ucid, uuid.uuid4())),
+                silhouette=quality_metrics['sample_silhouette'][roi_global_index],
+                hdbscan_probability=quality_metrics['hdbscan']['sample_probabilities'][roi_global_index],
+                roi_index=roi_global_index,
+                matched=bool(matched)))
+            
+            roi_global_index += 1        
+    
+    return pd.DataFrame.from_records(all_rois, index='roi_index')
+
 
 def align_plane(plane, out_dir, out_name):
     data = roicat.data_importing.Data_suite2p(
@@ -289,6 +316,11 @@ def align_plane(plane, out_dir, out_name):
         frameRate=5.0,
         loop=0,
     )
+    
+    csv_path = str(dir_save / (name_save + '.ROICaT.tracking.results' + '.csv')),
+        mkdir=True
+    roi_table = build_roi_table(plane, results, quality_metrics)
+    roi_table.to_csv(csv_path)
 
 if __name__ == "__main__":    
     logging.basicConfig(level=logging.INFO)

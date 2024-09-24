@@ -21,6 +21,7 @@ def load_session(session_dir, default_fov_scale_factor=None):
                     projection_image_path=projection_image_path,
                     stat_path=stat_path,
                     ops_path=ops_path,
+                    session_name=session_dir.parts[-1]
                 )
             else:
                 logging.warning(f"missing stat/ops paths for {plane_dir}")
