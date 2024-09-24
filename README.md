@@ -1,3 +1,3 @@
-# aind-capsule-template
+# ROICaT Cross-session Matching
 
-Basic structure of a capsule to be customized as needed.
+Run ROICaT on multiple sessions, details forthcoming.
