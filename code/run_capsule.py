@@ -25,7 +25,8 @@ def run():
         outputs.append(dict(
             t_start=t_start,
             t_end=t_end,
-            results=results
+            results=results,
+            plane_name=name
         ))
         
     dds = list(find_data_descriptions('/data/'))

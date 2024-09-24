@@ -1,5 +1,5 @@
 from aind_data_schema.core.processing import AnalysisProcess, DataProcess, PipelineProcess, Processing, ProcessName
-from aind_data_schema.core.data_description import DerivedDataDescription, Modality
+from aind_data_schema.core.data_description import AnalysisDescription, Modality
 from aind_data_schema_models.platforms import Platform
 import glob, json
 import aind_metadata_upgrader
@@ -22,7 +22,7 @@ def build_plane_data_process(outputs):
          name=ProcessName.VIDEO_ROI_SEGMENTATION,
          software_version="1.2.2",
          input_location="/data/",
-         output_location=f"/results/{outputs.get('name')}",
+         output_location=f"/results/{outputs.get('plane_name')}",
          start_date_time=outputs['t_start'],
          end_date_time=outputs['t_end'],
          code_url="https://github.com/RichieHakim/ROICaT",
@@ -33,7 +33,7 @@ def build_data_description(input_data_descriptions, outputs):
     dd = copy.deepcopy(input_data_descriptions[0])
     dd['modality'] = [Modality.POPHYS] # hardcoded until bug is fixed
     dd = DataDescriptionUpgrade(old_data_description_dict=dd).upgrade()
-    return DerivedDataDescription.from_data_description(dd, process_name='matching')
+    return AnalysisDescription(**dd.dict(), analysis_name='session-matching')
 
  
 def find_data_descriptions(data_dir):
