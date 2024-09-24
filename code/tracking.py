@@ -286,10 +286,9 @@ def align_plane(plane, out_dir, out_name):
     #     alphas_sf=clusterer.quality_metrics['sample_silhouette'],  ## Set brightness of each ROI based on some 1-D array
     )
 
-    dir_save = Path(out_dir).resolve()
-    name_save = Path(out_name).resolve().name
+    dir_save = (Path(out_dir) / out_name).resolve()    
 
-    path_save = dir_save / (name_save + '.ROICaT.tracking.results' + '.pkl')
+    path_save = dir_save / ('ROICaT.tracking.results' + '.pkl')
     print(f'path_save: {path_save}')
     
     roicat.helpers.pickle_save(
@@ -300,7 +299,7 @@ def align_plane(plane, out_dir, out_name):
 
     roicat.helpers.pickle_save(
         obj=run_data,
-        filepath=str(dir_save / (name_save + '.ROICaT.tracking.rundata' + '.pkl')),
+        filepath=str(dir_save / ('ROICaT.tracking.rundata' + '.pkl')),
         mkdir=True,
     )
     
@@ -312,13 +311,12 @@ def align_plane(plane, out_dir, out_name):
             line_width=10,
             position=(30, 90),
         ), 
-        path=str(Path(dir_save).resolve() / (name_save + '.FOV_clusters.gif')),
+        path=str(Path(dir_save).resolve() / ('FOV_clusters' + '.gif')),
         frameRate=5.0,
         loop=0,
     )
     
-    csv_path = str(dir_save / (name_save + '.ROICaT.tracking.results' + '.csv')),
-        mkdir=True
+    csv_path = str(dir_save / ('ROICaT.tracking.results' + '.csv'))
     roi_table = build_roi_table(plane, results, quality_metrics)
     roi_table.to_csv(csv_path)
 
