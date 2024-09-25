@@ -1,5 +1,5 @@
 from aind_data_schema.core.processing import AnalysisProcess, DataProcess, PipelineProcess, Processing, ProcessName
-from aind_data_schema.core.data_description import AnalysisDescription, Modality
+from aind_data_schema.core.data_description import AnalysisDescription, Modality, DataLevel
 from aind_data_schema_models.platforms import Platform
 import glob, json
 import aind_metadata_upgrader
@@ -33,6 +33,9 @@ def build_data_description(input_data_descriptions, outputs):
     dd = copy.deepcopy(input_data_descriptions[0])
     dd['modality'] = [Modality.POPHYS] # hardcoded until bug is fixed
     dd = DataDescriptionUpgrade(old_data_description_dict=dd).upgrade()
+    if not dd.project_name:
+        dd.project_name = 'unknown'
+    dd.data_level = DataLevel.DERIVED
     return AnalysisDescription(**dd.dict(), analysis_name='session-matching')
 
  
