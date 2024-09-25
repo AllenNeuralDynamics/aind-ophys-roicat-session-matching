@@ -19,7 +19,7 @@ def build_processing(outputs):
     
 def build_plane_data_process(outputs):
      return DataProcess(
-         name=ProcessName.VIDEO_ROI_SEGMENTATION,
+         name=ProcessName.VIDEO_ROI_CROSS_SESSION_MATCHING,
          software_version="1.2.2",
          input_location="/data/",
          output_location=f"/results/{outputs.get('plane_name')}",
@@ -36,6 +36,7 @@ def build_data_description(input_data_descriptions, outputs):
     if not dd.project_name:
         dd.project_name = 'unknown'
     dd.data_level = DataLevel.DERIVED
+    # TODO: AnalysisDescription is setting the name using project, in this case we should name by subject
     return AnalysisDescription(**dd.dict(), analysis_name='session-matching')
 
  
