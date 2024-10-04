@@ -42,7 +42,7 @@ def build_roi_table(plane, results, quality_metrics):
 def align_plane(plane, out_dir, out_name):
     data = roicat.data_importing.Data_roicat()
     data.set_spatialFootprints([p.rois for p in plane], um_per_pixel=plane[0].um_per_px)
-    data._transform_spatialFootprints_to_ROIImages(out_height_width=(36, 36))
+    data.transform_spatialFootprints_to_ROIImages(out_height_width=(36, 36))
     data._make_session_bool()
     data.set_FOV_images([p.image for p in plane])
 
@@ -269,8 +269,8 @@ def align_plane(plane, out_dir, out_name):
         'clusterer': clusterer.serializable_dict,
     })
     
-    print(f'Number of clusters: {len(np.unique(results["clusters"]["labels"]))}')
-    print(f'Number of discarded ROIs: {(results["clusters"]["labels"]==-1).sum()}')
+    logging.info(f'Number of clusters: {len(np.unique(results["clusters"]["labels"]))}')
+    logging.info(f'Number of discarded ROIs: {(results["clusters"]["labels"]==-1).sum()}')
     
     FOV_clusters = roicat.visualization.compute_colored_FOV(
         spatialFootprints=[r.power(0.7) for r in results['ROIs']['ROIs_aligned']],  ## Spatial footprint sparse arrays
@@ -284,21 +284,18 @@ def align_plane(plane, out_dir, out_name):
     )
 
     dir_save = (Path(out_dir) / out_name).resolve()    
-
-    path_save = dir_save / ('ROICaT.tracking.results' + '.pkl')
-    print(f'path_save: {path_save}')
     
-    roicat.helpers.pickle_save(
-        obj=results,
-        filepath=path_save,
-        mkdir=True,
-    )
+    paths_save = {
+        'results_clusters': str(Path(dir_save) / 'tracking.results_clusters.json'),
+        'params_used':      str(Path(dir_save) / 'tracking.params_used.json'),
+        'results_all':      str(Path(dir_save) / 'tracking.results_all.richfile'),
+        'run_data':         str(Path(dir_save) / 'tracking.run_data.richfile'),
+    }
 
-    roicat.helpers.pickle_save(
-        obj=run_data,
-        filepath=str(dir_save / ('ROICaT.tracking.rundata' + '.pkl')),
-        mkdir=True,
-    )
+    roicat.helpers.json_save(obj=results_clusters, filepath=paths_save['results_clusters'])
+    roicat.helpers.json_save(obj=params_used, filepath=paths_save['params_used'])
+    roicat.util.RichFile_ROICaT(path=paths_save['results_all']).save(obj=results_all, overwrite=True)
+    roicat.util.RichFile_ROICaT(path=paths_save['run_data']).save(obj=run_data, overwrite=True)
     
     roicat.helpers.save_gif(
         array=roicat.helpers.add_text_to_images(
