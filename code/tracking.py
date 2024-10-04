@@ -67,8 +67,8 @@ def align_plane(plane, mode_transform, out_dir, out_name):
         ims_moving=FOV_images,  ## input images
         template_method='image',  ## 'sequential': align images to neighboring images (good for drifting data). 'image': align to a single image
         mode_transform=mode_transform,  ## type of geometric transformation. See openCV's cv2.findTransformECC for details
-        mask_borders=(50,50,50,50),  ## number of pixels to mask off the edges (top, bottom, left, right)
-        n_iter=50,  ## number of iterations for optimization
+        mask_borders=(10,10,10,10),  ## number of pixels to mask off the edges (top, bottom, left, right)
+        n_iter=100,  ## number of iterations for optimization
         termination_eps=1e-09,  ## convergence tolerance
         gaussFiltSize=31,  ## size of gaussian blurring filter applied to all images
         auto_fix_gaussFilt_step=10,  ## increment in gaussFiltSize after a failed optimization
@@ -305,22 +305,8 @@ def align_plane(plane, mode_transform, out_dir, out_name):
 
     roicat.helpers.json_save(obj=results_clusters, filepath=paths_save['results_clusters'])
     roicat.helpers.json_save(obj=params_used, filepath=paths_save['params_used'])
-    
-    # broken at the moment
-    #roicat.util.RichFile_ROICaT(path=paths_save['results_all']).save(obj=results_all, overwrite=True)
-    #roicat.util.RichFile_ROICaT(path=paths_save['run_data']).save(obj=run_data, overwrite=True)
-
-    #roicat.helpers.pickle_save(
-    #    obj=results_all,
-    #    filepath=paths_save['results_all'],
-    #    mkdir=True,
-    #)
-
-    #roicat.helpers.pickle_save(
-    #    obj=run_data,
-    #    filepath=paths_save['run_data'],
-    #    mkdir=True,
-    #)
+    roicat.util.RichFile_ROICaT(path=paths_save['results_all']).save(obj=results_all, overwrite=True)
+    roicat.util.RichFile_ROICaT(path=paths_save['run_data']).save(obj=run_data, overwrite=True)
     
     roicat.helpers.save_gif(
         array=roicat.helpers.add_text_to_images(
