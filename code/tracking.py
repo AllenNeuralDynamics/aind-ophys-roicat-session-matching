@@ -20,14 +20,17 @@ def build_roi_table(plane, results, quality_metrics):
     for session_index, session_roi_ids in enumerate(results['clusters']['labels_bySession']):
         for roi_session_index, ucid in enumerate(session_roi_ids):
             matched = ucid >= 0
+        
+            hdbscan = quality_metrics.get('hdbscan', None)
+            sample_probabilities = hdbscan['sample_probabilities'][roi_global_index] if hdbscan else None
             all_rois.append(dict(
-                fov_name=plane[session_index]['plane_name'],
-                session_name=plane[session_index]['session_name'],
+                fov_name=plane[session_index].plane_name,
+                session_name=plane[session_index].session_name,
                 roi_session_index=int(roi_session_index), 
                 ucid=int(ucid),
                 roi_id=str(uuid_lookup.get(ucid, uuid.uuid4())),
                 silhouette=quality_metrics['sample_silhouette'][roi_global_index],
-                hdbscan_probability=quality_metrics['hdbscan']['sample_probabilities'][roi_global_index],
+                hdbscan_probability=sample_probabilities,
                 roi_index=roi_global_index,
                 matched=bool(matched)))
             
@@ -37,15 +40,11 @@ def build_roi_table(plane, results, quality_metrics):
 
 
 def align_plane(plane, out_dir, out_name):
-    data = roicat.data_importing.Data_suite2p(
-        paths_statFiles=[ p['stat_path'] for p in plane ],
-        paths_opsFiles=[ p['ops_path'] for p in plane ],
-        um_per_pixel=[ p['fov_scale_factor'] for p in plane ],  ## IMPORTANT PARAMETER. Use a list of floats if values differ in each session.
-        new_or_old_suite2p='new',
-        type_meanImg='meanImg',
-    #     FOV_images=FOVs_mixed,
-        verbose=True,
-    )
+    data = roicat.data_importing.Data_roicat()
+    data.set_spatialFootprints([p.rois for p in plane], um_per_pixel=plane[0].um_per_px)
+    data._transform_spatialFootprints_to_ROIImages(out_height_width=(36, 36))
+    data._make_session_bool()
+    data.set_FOV_images([p.image for p in plane])
 
     assert data.check_completeness(verbose=False)['tracking'], f"Data object is missing attributes necessary for tracking."
     
@@ -253,10 +252,10 @@ def align_plane(plane, out_dir, out_name):
             "idx_roi_session": np.where(data.session_bool)[1],
             "n_sessions": data.n_sessions,
         },
-        "input_data": {
-            "paths_stat": data.paths_stat,
-            "paths_ops": data.paths_ops,
-        },
+        #"input_data": {
+        #    "paths_stat": data.paths_stat,
+        #    "paths_ops": data.paths_ops,
+        #},
         "quality_metrics": clusterer.quality_metrics if hasattr(clusterer, 'quality_metrics') else None,
     }
     
@@ -310,7 +309,7 @@ def align_plane(plane, out_dir, out_name):
             position=(30, 90),
         ), 
         path=str(Path(dir_save).resolve() / ('FOV_clusters' + '.gif')),
-        frameRate=5.0,
+        frameRate=3.0,
         loop=0,
     )
     
