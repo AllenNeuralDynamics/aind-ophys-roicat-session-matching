@@ -331,7 +331,7 @@ def align_plane(plane, mode_transform, out_dir, out_name):
             position=(30, 90),
         ), 
         path=str(Path(dir_save).resolve() / 'FOV_clusters.gif'),
-        frameRate=10.0,
+        frameRate=3.0,
         loop=0,
     )
     
