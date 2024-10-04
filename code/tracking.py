@@ -39,7 +39,7 @@ def build_roi_table(plane, results, quality_metrics):
     return pd.DataFrame.from_records(all_rois, index='roi_index')
 
 
-def align_plane(plane, out_dir, out_name):
+def align_plane(plane, mode_transform, out_dir, out_name):
     data = roicat.data_importing.Data_roicat()
     data.set_spatialFootprints([p.rois for p in plane], um_per_pixel=plane[0].um_per_px)
     data.transform_spatialFootprints_to_ROIImages(out_height_width=(36, 36))
@@ -66,7 +66,7 @@ def align_plane(plane, out_dir, out_name):
         template=0.5,  ## specifies which image to use as the template. Either array (image), integer (ims_moving index), or float (ims_moving fractional index)
         ims_moving=FOV_images,  ## input images
         template_method='image',  ## 'sequential': align images to neighboring images (good for drifting data). 'image': align to a single image
-        mode_transform='affine',  ## type of geometric transformation. See openCV's cv2.findTransformECC for details
+        mode_transform=mode_transform,  ## type of geometric transformation. See openCV's cv2.findTransformECC for details
         mask_borders=(50,50,50,50),  ## number of pixels to mask off the edges (top, bottom, left, right)
         n_iter=50,  ## number of iterations for optimization
         termination_eps=1e-09,  ## convergence tolerance

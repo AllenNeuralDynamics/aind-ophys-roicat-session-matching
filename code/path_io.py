@@ -18,14 +18,29 @@ class MatchingData:
     rois: np.array = None
     um_per_px: float = None
     image: np.array = None
-    
 
-def get_rois_from_extraction_h5(extraction_file):
+
+
+def load_extraction_h5(matching, extraction_file):
     with h5py.File(extraction_file) as f:
-        rois = sparse.COO(
+        matching.rois = sparse.COO(
             f["rois/coords"], f["rois/data"], f["rois/shape"]
         ).todense()
-        return rois    
+        matching.image = f['meanImg'][:]                    
+    
+
+def load_suite2p(matching, stat_file, ops_file):
+    stat = np.load(stat_file, allow_pickle=True)
+    rois = np.empty((len(stat),) + matching.dims, dtype=np.float32)
+    for i, s in enumerate(stat):
+        rois[i, s["ypix"], s["xpix"]] = s["lam"]
+        
+    matching.rois = rois
+        
+    ops = np.load(ops_file, allow_pickle=True).item()
+    matching.image = ops['meanImg']
+    return rois
+
 
 def load_session_planes(session_dir, default_fov_scale_factor=0.78):    
     session_dir = Path(session_dir)
@@ -48,13 +63,16 @@ def load_session_planes(session_dir, default_fov_scale_factor=0.78):
             
             try:
                 extraction_file = next(plane_dir.glob("**/extraction.h5"))            
-                matching.rois = get_rois_from_extraction_h5(extraction_file)    
-                with h5py.File(extraction_file, 'r') as f:
-                    matching.image = f['meanImg'][:]
-                    
+                load_extraction_h5(matching, extraction_file)
+                
             except StopIteration as e:
-                logging.error(f"could not find rois for {plane_dir}")
-                continue                                        
+                try:
+                    stat_file = next(plane_dir.glob("**/stat.npy"))
+                    ops_file = next(plane_dir.glob("**/ops.npy"))
+                    load_suite2p(matching, stat_file, ops_file)
+                except StopIteration as e:
+                    logging.error(f"could not find rois for {plane_dir}")
+                    continue                                        
             
             planes.append(matching)
                 

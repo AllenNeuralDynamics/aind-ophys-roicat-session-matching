@@ -6,6 +6,22 @@
 	},
 	"parameters": [
 		{
+			"id": "XksYm0CHcdgXGyga",
+			"name": "linear-transform-type",
+			"param_name": "linear-transform-type",
+			"description": "What type of linear transform to apply before nonlinear alignment.",
+			"type": "list",
+			"value_type": "string",
+			"default_value": "euclidean",
+			"required": true,
+			"extra_data": [
+				"translation",
+				"euclidean",
+				"affine",
+				"homography"
+			]
+		},
+		{
 			"id": "mSJrmYdm1IISlmAH",
 			"name": "default-fov-scale-factor",
 			"param_name": "default-fov-scale-factor",
