@@ -15,7 +15,7 @@ def build_roi_table(plane, results, quality_metrics):
     all_rois = []
     
     ucids = set(results['clusters']['labels_dict'].keys())
-    uuid_lookup = { ucid: uuid.uuid4() for ucid in ucids if ucid >= 0 }    
+    uuid_lookup = { ucid: uuid.uuid4() for ucid in ucids if int(ucid) >= 0 }    
     roi_global_index=0
     for session_index, session_roi_ids in enumerate(results['clusters']['labels_bySession']):
         for roi_session_index, ucid in enumerate(session_roi_ids):
@@ -236,13 +236,21 @@ def align_plane(plane, out_dir, out_name):
     
     labels_squeezed, labels_bySession, labels_bool, labels_bool_bySession, labels_dict = roicat.tracking.clustering.make_label_variants(labels=labels, n_roi_bySession=data.n_roi)
 
-    results = {
+    results_clusters = {
+        'labels': labels_squeezed,
+        'labels_bySession': labels_bySession,
+        'labels_dict': labels_dict,
+        'quality_metrics': quality_metrics,
+    }
+
+    results_all = {
         "clusters":{
-            "labels": labels_squeezed,
-            "labels_bySession": labels_bySession,
+            "labels": roicat.util.JSON_List(labels_squeezed),
+            "labels_bySession": roicat.util.JSON_List(labels_bySession),
             "labels_bool": labels_bool,
             "labels_bool_bySession": labels_bool_bySession,
-            "labels_dict": labels_dict,
+            "labels_dict": roicat.util.JSON_Dict(labels_dict),
+            "quality_metrics": roicat.util.JSON_Dict(clusterer.quality_metrics) if hasattr(clusterer, 'quality_metrics') else None,
         },
         "ROIs": {
             "ROIs_aligned": aligner.ROIs_aligned,
@@ -256,34 +264,37 @@ def align_plane(plane, out_dir, out_name):
         #    "paths_stat": data.paths_stat,
         #    "paths_ops": data.paths_ops,
         #},
-        "quality_metrics": clusterer.quality_metrics if hasattr(clusterer, 'quality_metrics') else None,
     }
+
+    run_data = {
+        'data': data.__dict__,
+        'aligner': aligner.__dict__,
+        'blurrer': blurrer.__dict__,
+        'roinet': roinet.__dict__,
+        'swt': swt.__dict__,
+        'sim': sim.__dict__,
+        'clusterer': clusterer.__dict__,
+    }
+
+    params_used = {name: mod['params'] for name, mod in run_data.items()}
+
     
-    run_data = copy.deepcopy({
-        'data': data.serializable_dict,
-        'aligner': aligner.serializable_dict,
-        'blurrer': blurrer.serializable_dict,
-        'roinet': roinet.serializable_dict,
-        'swt': swt.serializable_dict,
-        'sim': sim.serializable_dict,
-        'clusterer': clusterer.serializable_dict,
-    })
-    
-    logging.info(f'Number of clusters: {len(np.unique(results["clusters"]["labels"]))}')
-    logging.info(f'Number of discarded ROIs: {(results["clusters"]["labels"]==-1).sum()}')
+    logging.info(f'Number of clusters: {len(np.unique(results_clusters["labels"]))}')
+    logging.info(f'Number of discarded ROIs: {(np.array(results_clusters["labels"])==-1).sum()}')
     
     FOV_clusters = roicat.visualization.compute_colored_FOV(
-        spatialFootprints=[r.power(0.7) for r in results['ROIs']['ROIs_aligned']],  ## Spatial footprint sparse arrays
-        FOV_height=results['ROIs']['frame_height'],
-        FOV_width=results['ROIs']['frame_width'],
-        labels=results["clusters"]["labels_bySession"],  ## cluster labels
+        spatialFootprints=[r.power(1.0) for r in results_all['ROIs']['ROIs_aligned']],  ## Spatial footprint sparse arrays
+        FOV_height=results_all['ROIs']['frame_height'],
+        FOV_width=results_all['ROIs']['frame_width'],
+        labels=results_all["clusters"]["labels_bySession"],  ## cluster labels
     #     labels=(np.array(results["clusters"]["labels"])!=-1).astype(np.int64),  ## cluster labels
         # alphas_labels=confidence*1.5,  ## Set brightness of each cluster based on some 1-D array
     #     alphas_labels=(clusterer.quality_metrics['cluster_silhouette'] > 0) * (clusterer.quality_metrics['cluster_intra_means'] > 0.4),
     #     alphas_sf=clusterer.quality_metrics['sample_silhouette'],  ## Set brightness of each ROI based on some 1-D array
     )
 
-    dir_save = (Path(out_dir) / out_name).resolve()    
+    dir_save = (Path(out_dir) / out_name).resolve() 
+    dir_save.mkdir(parents=True, exist_ok=True) 
     
     paths_save = {
         'results_clusters': str(Path(dir_save) / 'tracking.results_clusters.json'),
@@ -294,8 +305,22 @@ def align_plane(plane, out_dir, out_name):
 
     roicat.helpers.json_save(obj=results_clusters, filepath=paths_save['results_clusters'])
     roicat.helpers.json_save(obj=params_used, filepath=paths_save['params_used'])
-    roicat.util.RichFile_ROICaT(path=paths_save['results_all']).save(obj=results_all, overwrite=True)
-    roicat.util.RichFile_ROICaT(path=paths_save['run_data']).save(obj=run_data, overwrite=True)
+    
+    # broken at the moment
+    #roicat.util.RichFile_ROICaT(path=paths_save['results_all']).save(obj=results_all, overwrite=True)
+    #roicat.util.RichFile_ROICaT(path=paths_save['run_data']).save(obj=run_data, overwrite=True)
+
+    #roicat.helpers.pickle_save(
+    #    obj=results_all,
+    #    filepath=paths_save['results_all'],
+    #    mkdir=True,
+    #)
+
+    #roicat.helpers.pickle_save(
+    #    obj=run_data,
+    #    filepath=paths_save['run_data'],
+    #    mkdir=True,
+    #)
     
     roicat.helpers.save_gif(
         array=roicat.helpers.add_text_to_images(
@@ -305,13 +330,13 @@ def align_plane(plane, out_dir, out_name):
             line_width=10,
             position=(30, 90),
         ), 
-        path=str(Path(dir_save).resolve() / ('FOV_clusters' + '.gif')),
-        frameRate=3.0,
+        path=str(Path(dir_save).resolve() / 'FOV_clusters.gif'),
+        frameRate=10.0,
         loop=0,
     )
     
     csv_path = str(dir_save / ('ROICaT.tracking.results' + '.csv'))
-    roi_table = build_roi_table(plane, results, quality_metrics)
+    roi_table = build_roi_table(plane, results_all, quality_metrics)
     roi_table.to_csv(csv_path)
     
-    return results
+    return results_all
