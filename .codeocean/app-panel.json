@@ -22,6 +22,20 @@
 			]
 		},
 		{
+			"id": "bkwDk4hO3n4hEF9f",
+			"name": "debug",
+			"param_name": "debug",
+			"description": "only run on a subset of data for testing purposes",
+			"type": "list",
+			"value_type": "string",
+			"default_value": "off",
+			"required": true,
+			"extra_data": [
+				"on",
+				"off"
+			]
+		},
+		{
 			"id": "mSJrmYdm1IISlmAH",
 			"name": "default-fov-scale-factor",
 			"param_name": "default-fov-scale-factor",

@@ -13,6 +13,7 @@ def run():
     parser = argparse.ArgumentParser()
     parser.add_argument("--default-fov-scale-factor", default=None, type=float)
     parser.add_argument("--linear-transform-type", default="euclidean", type=str)
+    parser.add_argument("--debug", default="off", type=str)
     args = parser.parse_args()
 
     planes = load_planes('/data/', default_fov_scale_factor=args.default_fov_scale_factor)
@@ -35,6 +36,9 @@ def run():
             results=results,
             plane_name=name
         ))
+
+        if args.debug == "on":
+            break
             
     p = build_processing(outputs)
     p.write_standard_file(output_directory='/results')

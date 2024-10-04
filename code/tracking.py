@@ -310,13 +310,26 @@ def align_plane(plane, mode_transform, out_dir, out_name):
     
     roicat.helpers.save_gif(
         array=roicat.helpers.add_text_to_images(
-            images=[(f * 255).astype(np.uint8) for f in FOV_clusters], 
+            images=[((f/np.max(f)) * 255).astype(np.uint8) for f in FOV_clusters], 
             text=[[f"{ii}",] for ii in range(len(FOV_clusters))], 
             font_size=3,
             line_width=10,
             position=(30, 90),
         ), 
         path=str(Path(dir_save).resolve() / 'FOV_clusters.gif'),
+        frameRate=3.0,
+        loop=0,
+    )
+
+    roicat.helpers.save_gif(
+        array=roicat.helpers.add_text_to_images(
+            images=[(f * 255).astype(np.uint8) for f in aligner.ims_registered_nonrigid], 
+            text=[[f"{ii}",] for ii in range(len(aligner.ims_registered_nonrigid))], 
+            font_size=3,
+            line_width=10,
+            position=(30, 90),
+        ), 
+        path=str(Path(dir_save).resolve() / 'FOV_images.gif'),
         frameRate=3.0,
         loop=0,
     )
