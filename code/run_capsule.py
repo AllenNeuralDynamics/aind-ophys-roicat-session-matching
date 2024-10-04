@@ -28,11 +28,12 @@ def run():
             results=results,
             plane_name=name
         ))
-        
-    dds = list(find_data_descriptions('/data/'))
+            
     p = build_processing(outputs)
     p.write_standard_file(output_directory='/results')
-    d = build_data_description(dds, outputs)
-    d.write_standard_file(output_directory='/results')
+    dds = list(find_data_descriptions('/data/'))
+    if dds:
+        d = build_data_description(dds, outputs)
+        d.write_standard_file(output_directory='/results')
 
 if __name__ == "__main__": run()
