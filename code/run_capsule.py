@@ -13,8 +13,17 @@ def run():
     parser = argparse.ArgumentParser()
     parser.add_argument("--default-fov-scale-factor", default=None, type=float)
     parser.add_argument("--linear-transform-type", default="euclidean", type=str)
+    parser.add_argument("--nonrigid-transform-type", default="DeepFlow", type=str)
     parser.add_argument("--debug", default="off", type=str)
     args = parser.parse_args()
+
+    nonrigid_transform_type = None
+    if args.nonrigid_transform_type == "DeepFlow":
+        nonrigid_transform_type = "createOptFlow_DeepFlow"
+    elif args.nonrigid_transform_type == "FarnebackOpticalFlow":
+        nonrigid_transform_type = "calcOpticalFlowFarneback"
+
+    logging.info(f"nonrigid transform type: {nonrigid_transform_type}")
 
     planes = load_planes('/data/', default_fov_scale_factor=args.default_fov_scale_factor)
 
@@ -25,7 +34,8 @@ def run():
         
         results = align_plane(
             plane=plane, 
-            mode_transform=args.linear_transform_type,
+            linear_transform_type=args.linear_transform_type,
+            nonrigid_transform_type=nonrigid_transform_type,
             out_dir='/results', 
             out_name=str(name))
         

@@ -22,6 +22,19 @@
 			]
 		},
 		{
+			"id": "42U0t0PW45iOAzbp",
+			"name": "nonrigid-transform-type",
+			"param_name": "nonrigid-transform-type",
+			"type": "list",
+			"value_type": "string",
+			"default_value": "DeepFlow",
+			"extra_data": [
+				"DeepFlow",
+				"FarnebackOpticalFlow",
+				"off"
+			]
+		},
+		{
 			"id": "bkwDk4hO3n4hEF9f",
 			"name": "debug",
 			"param_name": "debug",

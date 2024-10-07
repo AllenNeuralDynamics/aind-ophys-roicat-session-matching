@@ -39,7 +39,7 @@ def build_roi_table(plane, results, quality_metrics):
     return pd.DataFrame.from_records(all_rois, index='roi_index')
 
 
-def align_plane(plane, mode_transform, out_dir, out_name):
+def align_plane(plane, linear_transform_type, nonrigid_transform_type, out_dir, out_name):
     data = roicat.data_importing.Data_roicat()
     data.set_spatialFootprints([p.rois for p in plane], um_per_pixel=plane[0].um_per_px)
     data.transform_spatialFootprints_to_ROIImages(out_height_width=(36, 36))
@@ -54,7 +54,7 @@ def align_plane(plane, mode_transform, out_dir, out_name):
         FOV_images=data.FOV_images,
         spatialFootprints=data.spatialFootprints,
         normalize_FOV_intensities=True,
-        roi_FOV_mixing_factor=0.5,
+        roi_FOV_mixing_factor=0.0,
         use_CLAHE=True,
         CLAHE_grid_size=100,
         CLAHE_clipLimit=1,
@@ -66,33 +66,34 @@ def align_plane(plane, mode_transform, out_dir, out_name):
         template=0.5,  ## specifies which image to use as the template. Either array (image), integer (ims_moving index), or float (ims_moving fractional index)
         ims_moving=FOV_images,  ## input images
         template_method='image',  ## 'sequential': align images to neighboring images (good for drifting data). 'image': align to a single image
-        mode_transform=mode_transform,  ## type of geometric transformation. See openCV's cv2.findTransformECC for details
+        mode_transform=linear_transform_type,  ## type of geometric transformation. See openCV's cv2.findTransformECC for details
         mask_borders=(10,10,10,10),  ## number of pixels to mask off the edges (top, bottom, left, right)
-        n_iter=100,  ## number of iterations for optimization
+        n_iter=300,  ## number of iterations for optimization
         termination_eps=1e-09,  ## convergence tolerance
-        gaussFiltSize=31,  ## size of gaussian blurring filter applied to all images
+        gaussFiltSize=15,  ## size of gaussian blurring filter applied to all images
         auto_fix_gaussFilt_step=10,  ## increment in gaussFiltSize after a failed optimization
     )
 
-    aligner.transform_images_geometric(FOV_images);
+    aligner.transform_images_geometric(FOV_images)
     
-    aligner.fit_nonrigid(
-    #     template=FOV_images[1],
-        template=0.5,  ## specifies which image to use as the template. Either array (image), integer (ims_moving index), or float (ims_moving fractional index)
-        ims_moving=aligner.ims_registered_geo,  ## Input images. Typically the geometrically registered images
-        remappingIdx_init=aligner.remappingIdx_geo,  ## The remappingIdx between the original images (and ROIs) and ims_moving
-        template_method='image',  ## 'sequential': align images to neighboring images. 'image': align to a single image, good if using geometric registration first
-        mode_transform='createOptFlow_DeepFlow',  ## algorithm for non-rigid transformation. Either 'createOptFlow_DeepFlow' or 'calcOpticalFlowFarneback'. See openCV docs for each. 
-        kwargs_mode_transform=None,  ## kwargs for `mode_transform`
-    )
+    if nonrigid_transform_type:
+        aligner.fit_nonrigid(
+        #     template=FOV_images[1],
+            template=0.5,  ## specifies which image to use as the template. Either array (image), integer (ims_moving index), or float (ims_moving fractional index)
+            ims_moving=aligner.ims_registered_geo,  ## Input images. Typically the geometrically registered images
+            remappingIdx_init=aligner.remappingIdx_geo,  ## The remappingIdx between the original images (and ROIs) and ims_moving
+            template_method='image',  ## 'sequential': align images to neighboring images. 'image': align to a single image, good if using geometric registration first
+            mode_transform=nonrigid_transform_type,  ## algorithm for non-rigid transformation. Either 'createOptFlow_DeepFlow' or 'calcOpticalFlowFarneback'. See openCV docs for each. 
+            kwargs_mode_transform=None,  ## kwargs for `mode_transform`
+        )
 
-    aligner.transform_images_nonrigid(FOV_images);
+        aligner.transform_images_nonrigid(FOV_images)
 
+    # defaults to nonrigid transform if it exists, otherwise the linear transform type
     aligner.transform_ROIs(
         ROIs=data.spatialFootprints, 
-        remappingIdx=aligner.remappingIdx_nonrigid,
         normalize=True,
-    );
+    )
     
     blurrer = roicat.tracking.blurring.ROI_Blurrer(
         frame_shape=(data.FOV_height, data.FOV_width),  ## FOV height and width
@@ -310,27 +311,29 @@ def align_plane(plane, mode_transform, out_dir, out_name):
     
     roicat.helpers.save_gif(
         array=roicat.helpers.add_text_to_images(
-            images=[((f/np.max(f)) * 255).astype(np.uint8) for f in FOV_clusters], 
+            images=[(f * 255).astype(np.uint8) for f in FOV_clusters], 
             text=[[f"{ii}",] for ii in range(len(FOV_clusters))], 
             font_size=3,
             line_width=10,
             position=(30, 90),
         ), 
         path=str(Path(dir_save).resolve() / 'FOV_clusters.gif'),
-        frameRate=3.0,
+        frameRate=2.0,
         loop=0,
     )
 
+    ims_to_show = aligner.ims_registered_nonrigid if nonrigid_transform_type else aligner.ims_registered_geo
+
     roicat.helpers.save_gif(
         array=roicat.helpers.add_text_to_images(
-            images=[(f * 255).astype(np.uint8) for f in aligner.ims_registered_nonrigid], 
-            text=[[f"{ii}",] for ii in range(len(aligner.ims_registered_nonrigid))], 
+            images=[((f/np.max(f)) * 255).astype(np.uint8) for f in ims_to_show], 
+            text=[[f"{ii}",] for ii in range(len(ims_to_show))], 
             font_size=3,
             line_width=10,
             position=(30, 90),
         ), 
         path=str(Path(dir_save).resolve() / 'FOV_images.gif'),
-        frameRate=3.0,
+        frameRate=2.0,
         loop=0,
     )
     
