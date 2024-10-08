@@ -56,7 +56,7 @@ def align_plane(plane, linear_transform_type, nonrigid_transform_type, out_dir, 
         normalize_FOV_intensities=True,
         roi_FOV_mixing_factor=0.0,
         use_CLAHE=True,
-        CLAHE_grid_size=100,
+        CLAHE_grid_size=10,
         CLAHE_clipLimit=1,
         CLAHE_normalize=True,
     )
@@ -65,12 +65,12 @@ def align_plane(plane, linear_transform_type, nonrigid_transform_type, out_dir, 
     #     template=FOV_images[4],
         template=0.5,  ## specifies which image to use as the template. Either array (image), integer (ims_moving index), or float (ims_moving fractional index)
         ims_moving=FOV_images,  ## input images
-        template_method='image',  ## 'sequential': align images to neighboring images (good for drifting data). 'image': align to a single image
+        template_method='sequential',  ## 'sequential': align images to neighboring images (good for drifting data). 'image': align to a single image
         mode_transform=linear_transform_type,  ## type of geometric transformation. See openCV's cv2.findTransformECC for details
-        mask_borders=(10,10,10,10),  ## number of pixels to mask off the edges (top, bottom, left, right)
+        mask_borders=(50,50,50,50),  ## number of pixels to mask off the edges (top, bottom, left, right)
         n_iter=300,  ## number of iterations for optimization
         termination_eps=1e-09,  ## convergence tolerance
-        gaussFiltSize=15,  ## size of gaussian blurring filter applied to all images
+        gaussFiltSize=81,  ## size of gaussian blurring filter applied to all images
         auto_fix_gaussFilt_step=10,  ## increment in gaussFiltSize after a failed optimization
     )
 
