@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
 set -e
 
-pip install "richfile<0.4.5"
 pip install git+https://github.com/RichieHakim/roiextractors

@@ -7,30 +7,44 @@
 	"parameters": [
 		{
 			"id": "XksYm0CHcdgXGyga",
-			"name": "linear-transform-type",
-			"param_name": "linear-transform-type",
+			"name": "geometric-method",
+			"param_name": "geometric-method",
 			"description": "What type of linear transform to apply before nonlinear alignment.",
 			"type": "list",
 			"value_type": "string",
-			"default_value": "euclidean",
+			"default_value": "RoMa",
 			"required": true,
 			"extra_data": [
-				"translation",
-				"euclidean",
-				"affine",
-				"homography"
+				"RoMa",
+				"DISK_LightGlue",
+				"LoFTR",
+				"ECC_cv2",
+				"PhaseCorrelation"
 			]
 		},
 		{
 			"id": "42U0t0PW45iOAzbp",
-			"name": "nonrigid-transform-type",
-			"param_name": "nonrigid-transform-type",
+			"name": "nonrigid-method",
+			"param_name": "nonrigid-method",
 			"type": "list",
 			"value_type": "string",
 			"default_value": "DeepFlow",
 			"extra_data": [
 				"DeepFlow",
-				"FarnebackOpticalFlow",
+				"RoMa",
+				"OpticalFlowFarneback",
+				"Off"
+			]
+		},
+		{
+			"id": "USHSvOTA0mkdC6kP",
+			"name": "all-to-all",
+			"param_name": "all-to-all",
+			"type": "list",
+			"value_type": "string",
+			"default_value": "on",
+			"extra_data": [
+				"on",
 				"off"
 			]
 		},

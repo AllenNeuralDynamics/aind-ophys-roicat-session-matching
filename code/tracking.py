@@ -39,7 +39,16 @@ def build_roi_table(plane, results, quality_metrics):
     return pd.DataFrame.from_records(all_rois, index='roi_index')
 
 
-def align_plane(plane, linear_transform_type, nonrigid_transform_type, out_dir, out_name):
+def align_plane(
+    plane, 
+    geometric_method, 
+    geometric_method_params,
+    nonrigid_method, 
+    nonrigid_method_params,
+    all_to_all, 
+    out_dir, 
+    out_name
+):    
     data = roicat.data_importing.Data_roicat()
     data.set_spatialFootprints([p.rois for p in plane], um_per_pixel=plane[0].um_per_px)
     data.transform_spatialFootprints_to_ROIImages(out_height_width=(36, 36))
@@ -48,7 +57,11 @@ def align_plane(plane, linear_transform_type, nonrigid_transform_type, out_dir, 
 
     assert data.check_completeness(verbose=False)['tracking'], f"Data object is missing attributes necessary for tracking."
     
-    aligner = roicat.tracking.alignment.Aligner(verbose=True)
+    aligner = roicat.tracking.alignment.Aligner(
+        verbose=True,
+        use_match_search=True,
+        all_to_all=all_to_all
+    )
 
     FOV_images = aligner.augment_FOV_images(
         FOV_images=data.FOV_images,
@@ -56,7 +69,7 @@ def align_plane(plane, linear_transform_type, nonrigid_transform_type, out_dir, 
         normalize_FOV_intensities=True,
         roi_FOV_mixing_factor=0.0,
         use_CLAHE=True,
-        CLAHE_grid_size=10,
+        CLAHE_grid_block_size=50,
         CLAHE_clipLimit=1,
         CLAHE_normalize=True,
     )
@@ -65,26 +78,23 @@ def align_plane(plane, linear_transform_type, nonrigid_transform_type, out_dir, 
     #     template=FOV_images[4],
         template=0.5,  ## specifies which image to use as the template. Either array (image), integer (ims_moving index), or float (ims_moving fractional index)
         ims_moving=FOV_images,  ## input images
-        template_method='sequential',  ## 'sequential': align images to neighboring images (good for drifting data). 'image': align to a single image
-        mode_transform=linear_transform_type,  ## type of geometric transformation. See openCV's cv2.findTransformECC for details
+        template_method='sequential',  ## 'sequential': align images to neighboring images (good for drifting data). 'image': align to a single image        
         mask_borders=(50,50,50,50),  ## number of pixels to mask off the edges (top, bottom, left, right)
-        n_iter=300,  ## number of iterations for optimization
-        termination_eps=1e-09,  ## convergence tolerance
-        gaussFiltSize=81,  ## size of gaussian blurring filter applied to all images
-        auto_fix_gaussFilt_step=10,  ## increment in gaussFiltSize after a failed optimization
+        method=geometric_method,
+        kwargs_method=geometric_method_params,
     )
 
     aligner.transform_images_geometric(FOV_images)
     
-    if nonrigid_transform_type:
+    if nonrigid_method:
         aligner.fit_nonrigid(
         #     template=FOV_images[1],
             template=0.5,  ## specifies which image to use as the template. Either array (image), integer (ims_moving index), or float (ims_moving fractional index)
             ims_moving=aligner.ims_registered_geo,  ## Input images. Typically the geometrically registered images
             remappingIdx_init=aligner.remappingIdx_geo,  ## The remappingIdx between the original images (and ROIs) and ims_moving
             template_method='image',  ## 'sequential': align images to neighboring images. 'image': align to a single image, good if using geometric registration first
-            mode_transform=nonrigid_transform_type,  ## algorithm for non-rigid transformation. Either 'createOptFlow_DeepFlow' or 'calcOpticalFlowFarneback'. See openCV docs for each. 
-            kwargs_mode_transform=None,  ## kwargs for `mode_transform`
+            method=nonrigid_method,
+            kwargs_method=nonrigid_method_params,            
         )
 
         aligner.transform_images_nonrigid(FOV_images)
@@ -322,7 +332,7 @@ def align_plane(plane, linear_transform_type, nonrigid_transform_type, out_dir, 
         loop=0,
     )
 
-    ims_to_show = aligner.ims_registered_nonrigid if nonrigid_transform_type else aligner.ims_registered_geo
+    ims_to_show = aligner.ims_registered_nonrigid if nonrigid_method else aligner.ims_registered_geo
 
     roicat.helpers.save_gif(
         array=roicat.helpers.add_text_to_images(

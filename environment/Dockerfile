@@ -1,6 +1,6 @@
-# hash:sha256:c3fe4c327429748ba6874bdc47f4e07f54872e72e44ed4504358e1fc8a4087b1
+# hash:sha256:b6c5fb233d59aa33ed2c34be97d4a6f4f0f69a577688ddca35a9b8ba999ea7b2
 ARG REGISTRY_HOST
-FROM $REGISTRY_HOST/codeocean/pytorch:2.1.0-cuda11.8-mambaforge23.1.0-4-python3.10.12-ubuntu22.04
+FROM $REGISTRY_HOST/codeocean/pytorch:2.4.0-cuda12.4.0-mambaforge24.5.0-0-python3.12.4-ubuntu22.04
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG AWS_ACCESS_KEY_ID
@@ -18,10 +18,11 @@ RUN apt-get update \
 
 RUN pip3 install -U --no-cache-dir \
     aind-data-schema==1.0.0 \
-    aind-metadata-upgrader==0.0.20 \
+    aind-metadata-upgrader==0.0.23 \
     h5py==3.12.1 \
+    jupyterlab==4.2.5 \
     pint==0.24.3 \
-    roicat[all]==1.3.2
+    roicat[all]==1.4.4
 
 COPY postInstall /
 RUN /postInstall
