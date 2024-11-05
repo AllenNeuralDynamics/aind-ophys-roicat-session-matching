@@ -59,7 +59,8 @@ def load_session_planes(session_dir, default_fov_scale_factor=0.78):
                 session_file = next(session_dir.glob("session.json"))            
                 matching.um_per_px, matching.dims = get_plane_metadata(session_file)
             except StopIteration as e:
-                extraction.um_per_px = default_fov_scale_factor
+                logging.warning(f"could not find session.json for {str(session_dir)}")
+                matching.um_per_px = default_fov_scale_factor
             
             try:
                 extraction_file = next(plane_dir.glob("**/extraction.h5"))            

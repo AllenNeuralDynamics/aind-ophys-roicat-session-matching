@@ -38,6 +38,20 @@ def build_roi_table(plane, results, quality_metrics):
     
     return pd.DataFrame.from_records(all_rois, index='roi_index')
 
+def save_bw_gif(ims_to_show, path):
+    roicat.helpers.save_gif(
+        array=roicat.helpers.add_text_to_images(
+            images=[((f/np.max(f)) * 255).astype(np.uint8) for f in ims_to_show], 
+            text=[[f"{ii}",] for ii in range(len(ims_to_show))], 
+            font_size=3,
+            line_width=10,
+            position=(30, 90),
+        ), 
+        path=path,
+        frameRate=1.0,
+        loop=0,
+    )
+
 
 def align_plane(
     plane, 
@@ -49,6 +63,10 @@ def align_plane(
     out_dir, 
     out_name
 ):    
+
+    DEVICE = roicat.helpers.set_device(use_GPU=True, verbose=True)
+    logging.info(f"using device: {DEVICE}")
+    
     data = roicat.data_importing.Data_roicat()
     data.set_spatialFootprints([p.rois for p in plane], um_per_pixel=plane[0].um_per_px)
     data.transform_spatialFootprints_to_ROIImages(out_height_width=(36, 36))
@@ -56,11 +74,17 @@ def align_plane(
     data.set_FOV_images([p.image for p in plane])
 
     assert data.check_completeness(verbose=False)['tracking'], f"Data object is missing attributes necessary for tracking."
+
+    save_bw_gif(
+        ims_to_show=data.FOV_images,
+        path=str(Path(dir_save).resolve() / 'FOV_images_unaligned.gif'),
+    )
     
     aligner = roicat.tracking.alignment.Aligner(
         verbose=True,
         use_match_search=True,
-        all_to_all=all_to_all
+        all_to_all=all_to_all,        
+        device=DEVICE
     )
 
     FOV_images = aligner.augment_FOV_images(
@@ -71,7 +95,7 @@ def align_plane(
         use_CLAHE=True,
         CLAHE_grid_block_size=50,
         CLAHE_clipLimit=1,
-        CLAHE_normalize=True,
+        CLAHE_normalize=True
     )
     
     aligner.fit_geometric(
@@ -115,8 +139,7 @@ def align_plane(
         spatialFootprints=aligner.ROIs_aligned[:],
     );
     
-    DEVICE = roicat.helpers.set_device(use_GPU=True, verbose=True)
-    dir_temp = tempfile.gettempdir()
+    dir_temp = "/scratch/"
 
     roinet = roicat.ROInet.ROInet_embedder(
         device=DEVICE,  ## Which torch device to use ('cpu', 'cuda', etc.)
@@ -318,6 +341,7 @@ def align_plane(
     roicat.helpers.json_save(obj=params_used, filepath=paths_save['params_used'])
     roicat.util.RichFile_ROICaT(path=paths_save['results_all']).save(obj=results_all, overwrite=True)
     roicat.util.RichFile_ROICaT(path=paths_save['run_data']).save(obj=run_data, overwrite=True)
+
     
     roicat.helpers.save_gif(
         array=roicat.helpers.add_text_to_images(
@@ -328,24 +352,20 @@ def align_plane(
             position=(30, 90),
         ), 
         path=str(Path(dir_save).resolve() / 'FOV_clusters.gif'),
-        frameRate=2.0,
+        frameRate=1.0,
         loop=0,
     )
 
-    ims_to_show = aligner.ims_registered_nonrigid if nonrigid_method else aligner.ims_registered_geo
-
-    roicat.helpers.save_gif(
-        array=roicat.helpers.add_text_to_images(
-            images=[((f/np.max(f)) * 255).astype(np.uint8) for f in ims_to_show], 
-            text=[[f"{ii}",] for ii in range(len(ims_to_show))], 
-            font_size=3,
-            line_width=10,
-            position=(30, 90),
-        ), 
-        path=str(Path(dir_save).resolve() / 'FOV_images.gif'),
-        frameRate=2.0,
-        loop=0,
+    save_bw_gif(
+        ims_to_show=aligner.ims_registered_geo,
+        path=str(Path(dir_save).resolve() / 'FOV_images_geometric.gif'),
     )
+
+    if aligner.ims_registered_nonrigid:
+        save_bw_gif(
+            ims_to_show=aligner.ims_registered_nonrigid,
+            path=str(Path(dir_save).resolve() / 'FOV_images_nonrigid.gif')
+        )
     
     csv_path = str(dir_save / ('ROICaT.tracking.results' + '.csv'))
     roi_table = build_roi_table(plane, results_all, quality_metrics)
