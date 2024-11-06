@@ -21,15 +21,21 @@ class MatchingData:
 
 
 
-def load_extraction_h5(matching, extraction_file):
+def load_extraction_h5(matching, projection, extraction_file):
     with h5py.File(extraction_file) as f:
         matching.rois = sparse.COO(
             f["rois/coords"], f["rois/data"], f["rois/shape"]
         ).todense()
-        matching.image = f['meanImg'][:]                    
+        matching.image = f[projection][:]
     
 
-def load_suite2p(matching, stat_file, ops_file):
+def load_suite2p(matching, projection, stat_file, ops_file):
+    s2p_projection_lookup = {
+        'meanImg': 'meanImg',
+        'maxImg': 'max_proj'
+    }
+    s2p_projection = s2p_projection_lookup[projection]
+
     stat = np.load(stat_file, allow_pickle=True)
     rois = np.empty((len(stat),) + matching.dims, dtype=np.float32)
     for i, s in enumerate(stat):
@@ -38,11 +44,15 @@ def load_suite2p(matching, stat_file, ops_file):
     matching.rois = rois
         
     ops = np.load(ops_file, allow_pickle=True).item()
-    matching.image = ops['meanImg']
+    matching.image = ops[s2p_projection]
     return rois
 
 
-def load_session_planes(session_dir, default_fov_scale_factor=0.78):    
+def load_session_planes(
+    session_dir, 
+    projection, 
+    default_fov_scale_factor=0.78
+):
     session_dir = Path(session_dir)
     planes = []
     for plane_index, plane_name in enumerate(sorted(os.listdir(session_dir))):
@@ -64,13 +74,13 @@ def load_session_planes(session_dir, default_fov_scale_factor=0.78):
             
             try:
                 extraction_file = next(plane_dir.glob("**/extraction.h5"))            
-                load_extraction_h5(matching, extraction_file)
+                load_extraction_h5(matching, projection, extraction_file)
                 
             except StopIteration as e:
                 try:
                     stat_file = next(plane_dir.glob("**/stat.npy"))
                     ops_file = next(plane_dir.glob("**/ops.npy"))
-                    load_suite2p(matching, stat_file, ops_file)
+                    load_suite2p(matching, projection, stat_file, ops_file)
                 except StopIteration as e:
                     logging.error(f"could not find rois for {plane_dir}")
                     continue                                        
@@ -97,13 +107,21 @@ def get_plane_metadata(session_file):
             dims = (fov["fov_height"], fov["fov_width"])
     return um_per_pixel, dims
 
-def load_planes(data_dir, default_fov_scale_factor=None):
+def load_planes(
+    data_dir, 
+    projection,
+    default_fov_scale_factor=None
+):
     if default_fov_scale_factor:
         logging.info(f"running with default fov scale factor: {default_fov_scale_factor}")
         
     sessions = []
     for session_path in os.listdir(data_dir):
-        session = load_session_planes(Path(data_dir) / Path(session_path), default_fov_scale_factor=default_fov_scale_factor)
+        session = load_session_planes(
+            session_dir=Path(data_dir) / Path(session_path), 
+            projection=projection, 
+            default_fov_scale_factor=default_fov_scale_factor
+        )
         sessions.append(session)
 
     planes = {}

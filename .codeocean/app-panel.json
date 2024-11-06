@@ -68,6 +68,20 @@
 			"param_name": "default-fov-scale-factor",
 			"type": "text",
 			"value_type": "number"
+		},
+		{
+			"id": "6gBgBgRxRGNHxide",
+			"name": "projection",
+			"param_name": "projection",
+			"description": "projection image used for alignment",
+			"type": "list",
+			"value_type": "string",
+			"default_value": "maxImg",
+			"required": true,
+			"extra_data": [
+				"meanImg",
+				"maxImg"
+			]
 		}
 	]
 }

@@ -59,6 +59,7 @@ def run():
     parser.add_argument("--nonrigid-method", default="RoMa", type=str)
     parser.add_argument("--all-to-all", default="on", type=str)
     parser.add_argument("--debug", default="off", type=str)
+    parser.add_argument("--projection", default="maxImg", type=str)
     args = parser.parse_args()
 
     args.nonrigid_method = None if args.nonrigid_method == "Off" else args.nonrigid_method
@@ -67,7 +68,11 @@ def run():
     logging.info(f"geometric method: {args.geometric_method}, {GEOMETRIC_METHOD_DEFAULTS.get(args.geometric_method)}")
     logging.info(f"nonrigid method: {args.nonrigid_method}, {NONRIGID_METHOD_DEFAULTS.get(args.nonrigid_method)}")
 
-    planes = load_planes('/data/', default_fov_scale_factor=args.default_fov_scale_factor)
+    planes = load_planes(
+        data_dir='/data/',
+        projection=args.projection, 
+        default_fov_scale_factor=args.default_fov_scale_factor
+    )
 
     outputs = []
     for name, plane in planes.items():
@@ -75,7 +80,7 @@ def run():
         t_start = datetime.datetime.now()
         
         results = align_plane(
-            plane=plane, 
+            plane=plane,
             geometric_method=args.geometric_method,
             geometric_method_params=GEOMETRIC_METHOD_DEFAULTS,
             nonrigid_method=args.nonrigid_method,
