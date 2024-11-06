@@ -75,6 +75,9 @@ def align_plane(
 
     assert data.check_completeness(verbose=False)['tracking'], f"Data object is missing attributes necessary for tracking."
 
+    dir_save = (Path(out_dir) / out_name).resolve() 
+    dir_save.mkdir(parents=True, exist_ok=True) 
+    
     save_bw_gif(
         ims_to_show=data.FOV_images,
         path=str(Path(dir_save).resolve() / 'FOV_images_unaligned.gif'),
@@ -326,9 +329,6 @@ def align_plane(
     #     alphas_labels=(clusterer.quality_metrics['cluster_silhouette'] > 0) * (clusterer.quality_metrics['cluster_intra_means'] > 0.4),
     #     alphas_sf=clusterer.quality_metrics['sample_silhouette'],  ## Set brightness of each ROI based on some 1-D array
     )
-
-    dir_save = (Path(out_dir) / out_name).resolve() 
-    dir_save.mkdir(parents=True, exist_ok=True) 
     
     paths_save = {
         'results_clusters': str(Path(dir_save) / 'tracking.results_clusters.json'),
