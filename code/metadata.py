@@ -32,7 +32,7 @@ def build_processing(outputs):
 def build_plane_data_process(outputs):
     return DataProcess(
         name=ProcessName.VIDEO_ROI_CROSS_SESSION_MATCHING,
-        software_version="1.2.2",
+        software_version="1.4.4",
         input_location="/data/",
         output_location=f"/results/{outputs.get('plane_name')}",
         start_date_time=outputs["t_start"],
