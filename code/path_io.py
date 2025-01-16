@@ -66,7 +66,7 @@ def load_session_planes(session_dir, projection, default_fov_scale_factor=0.78):
                 matching.um_per_px = default_fov_scale_factor
 
             try:
-                extraction_file = next(plane_dir.glob("**/extraction.h5"))
+                extraction_file = next(plane_dir.glob("**/*extraction.h5"))
                 load_extraction_h5(matching, projection, extraction_file)
 
             except StopIteration as e:
